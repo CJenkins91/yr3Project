@@ -1,7 +1,6 @@
 // Pong Game using GLUT and OpenGL
 // Author: Chris Jenkins
 
-
 #include <windows.h>
 #include <glut.h>
 #include <time.h>
@@ -10,8 +9,11 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 //#include <DirectTraceAPI.h>
+#include <irrKlang.h>
 #include <iostream>
+using namespace irrklang;
 
+#pragma comment(lib, "irrKlang.lib")
 //texture stuff
 //left, right
 int xBoundaries[2] = {18,-18};
@@ -158,6 +160,9 @@ bool startGame = false;
 int futureBallPosX = 0;
 int currentBallPosX = ballPosX;
 int direction[2] = { currentBallPosX, futureBallPosX};
+
+int p1Score = 0;
+int p2Score = 0;
 
 // faces of the paddle (cuboid)
 GLint faces[6][4] = {
@@ -353,6 +358,7 @@ void setP2PaddlePosRight(){
 		p2PosX = -18;
 	}
 }
+ISoundEngine* engine = createIrrKlangDevice();
 
 /*
 * takes in Player 1 and 2's key presses and
@@ -575,8 +581,8 @@ void passiveMotionFunc(void(*func)(int button, int state, int x, int y)){
 
 void setPlusBallPosZ(){
 
-	std::cout << "ballPosZ = ";
-	std::cout << ballPosZ;
+	//std::cout << "ballPosZ = ";
+	//std::cout << ballPosZ;
 	Sleep(500);
 }
 
@@ -622,12 +628,12 @@ void ballMovement(){
 	if (p1collisionDetection == true){
 		//std::cout << "wow it actually worked";
 		zMovement -= zMovement;
-		std::cout << "collision occurred";
+		//std::cout << "collision occurred";
 		xMovement += 4 * xMovement;
 		collisionDetection = false;
 	}
 	else{
-		std::cout << "nope";
+		//std::cout << "nope";
 	}
 	/*
 	else if (collisionDetection == false){
@@ -638,12 +644,12 @@ void ballMovement(){
 	if (p2collisionDetection == true){
 		//std::cout << "wow it actually worked";
 		zMovement -= zMovement;
-		std::cout << "collision occurred";
+		//std::cout << "collision occurred";
 		xMovement += 4 * xMovement;
 		collisionDetection = false;
 	}
 	else{
-		std::cout << "nope";
+		//std::cout << "nope";
 	}
 	if (rightBoundary >= ballPosX ){
 		xMovement += xMovement;
@@ -659,8 +665,8 @@ void ballMovement(){
 
 	ballPosZ += zMovement;
 	ballPosX += xMovement;
-	std::cout << zMovement;
-	std::cout << xMovement;
+	//std::cout << zMovement;
+	//std::cout << xMovement;
 }
 
 void p1DetectionCollision(){
@@ -691,17 +697,28 @@ void p1DetectionCollision(){
 		(distance[1] = sphereCenterRelBox[1] - boxPoint[1]) };
 	//if the total distance is less than the radius squared then a collision has occurred
 	if (distance[0] * distance[0] + distance[1] * distance[1] < radius*radius){
+		engine->play2D("C:/Users/Chris/Desktop/collision.wav");
 		zMovement = -zMovement;
 		ballPosX = ballPosX + 4 * xMovement;
 		ballPosZ = ballPosZ + 4 * zMovement;
 		//collisionDetection = true;
-		std::cout << "ballPosX: ";
-		std::cout << ballPosX;
-		std::cout << "ballPosZ: ";
-		std::cout << ballPosZ;
+		//std::cout << "ballPosX: ";
+		//std::cout << ballPosX;
+		//std::cout << "ballPosZ: ";
+		//std::cout << ballPosZ;
+
 	}
 	//otherwise a collision has not occurred
-	else{ p1collisionDetection = false; }
+	else{ p1collisionDetection = false; 
+	if (ballPosZ > p1PosZ){
+		engine->play2D("C:/Users/Chris/Desktop/pointScored.wav");
+		p1Score += 1;
+		std::cout << "p1Score = ";
+		std::cout << p1Score;
+		ballPosX = 0;
+		ballPosZ = 0;
+	}
+	}
 }
 
 void p2DetectionCollision(){
@@ -732,20 +749,32 @@ void p2DetectionCollision(){
 		(distance[1] = sphereCenterRelBox[1] - boxPoint[1]) };
 	//if the total distance is less than the radius squared then a collision has occurred
 	if (distance[0] * distance[0] + distance[1] * distance[1] < radius*radius){
+		engine->play2D("C:/Users/Chris/Desktop/collision.wav");
 		zMovement = -zMovement;
 		ballPosX = ballPosX + 4 * xMovement;
 		ballPosZ = ballPosZ + 4 * zMovement;
 		//collisionDetection = true;
-		std::cout << "ballPosX: ";
-		std::cout << ballPosX;
-		std::cout << "ballPosZ: ";
-		std::cout << ballPosZ;
+		//std::cout << "ballPosX: ";
+		//std::cout << ballPosX;
+		//std::cout << "ballPosZ: ";
+		//std::cout << ballPosZ;
 	}
 	//otherwise a collision has not occurred
-	else{ p2collisionDetection = false; }
+	else{
+		p2collisionDetection = false;
+		if (ballPosZ < p2PosZ){
+			engine->play2D("C:/Users/Chris/Desktop/collision.wav");
+			p2Score += 1;
+			std::cout << "p2Score = ";
+			std::cout << p2Score;
+			ballPosX = 0;
+				ballPosZ = 0;
+		}
+	}
 }
-
 	void updateHandler(int seconds){
+
+
 		ballMovement();
 		p1DetectionCollision();
 		p2DetectionCollision();
@@ -753,40 +782,56 @@ void p2DetectionCollision(){
 		//checkOtherCollisions();
 		//handleCollision();
 		//collisionDetection();
-		
-		
+
+
 		if (rightBoundary <= ballPosX){
 			xMovement -= xMovement;
+			//engine->play2D("C:/Users/Chris/Desktop/collision.wav");
 			//std::cout << xMovement;
 			Sleep(500);
 			//play sound
+
 		}
 		else if (leftBoundary >= ballPosX){
 			xMovement -= xMovement;
+			//engine->play2D("C:/Users/Chris/Desktop/collision.wav");
 			//std::cout << xMovement;
 			Sleep(500);
 			//play sound
+
 		}
 
+		if (p1Score >= 5){
+			std::cout << "p1 wins!";
+			Sleep(1000);
+			exit(0);
 
-		ballPosZ += zMovement;
+		}
+		else if (p2Score >= 5){
+			std::cout << "p2 wins!";
+			Sleep(1000);
+			exit(0);
+		}
+		//ballPosZ += zMovement;
 		//std::cout << zMovement;
 
-	
-		bool p1Collision = false;
-		bool p2Collision = false;
+
+		//bool p1Collision = false;
+		//bool p2Collision = false;
 
 		//ballPosX += xMovement;
-		
-		//ballPosZ += zMovement;
-		
 
-		 
-		
-		
-	glutTimerFunc(3, &updateHandler, 0);
-	glutPostRedisplay();
-}
+		//ballPosZ += zMovement;
+
+
+
+
+
+		glutTimerFunc(3, &updateHandler, 0);
+		glutPostRedisplay();
+	}
+
+
 
 /*
 *	Creates the window and loads the game
@@ -805,6 +850,11 @@ int main(int argc, char **argv)
 	glutSpecialFunc(keyboardInput);
 	InitMatrix(orientationMatrix);
 	updateFPS();
+
+	
+	
+	
+
 	glutMainLoop();
 	return 0;
 }
